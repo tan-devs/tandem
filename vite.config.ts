@@ -8,12 +8,6 @@ export default defineConfig({
 	optimizeDeps: {
 		exclude: ['monaco-editor', 'y-monaco']
 	},
-	server: {
-		headers: {
-			'Cross-Origin-Opener-Policy': 'same-origin',
-			'Cross-Origin-Embedder-Policy': 'require-corp'
-		}
-	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

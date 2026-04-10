@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client.js';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	let tab: 'signin' | 'signup' = $state('signin');
 
@@ -8,42 +10,33 @@
 	let name = $state('');
 	let error = $state('');
 	let loading = $state(false);
-	let token = $state('');
 
 	async function handleSignIn() {
 		error = '';
 		loading = true;
-		const { data, error: err } = await authClient.signIn.email({ email, password });
+		const { error: err } = await authClient.signIn.email({ email, password });
 		loading = false;
 		if (err) {
 			error = err.message ?? 'Sign in failed';
 		} else {
-			token = data?.token ?? '';
+			goto(resolve('/'));
 		}
 	}
 
 	async function handleSignUp() {
 		error = '';
 		loading = true;
-		const { data, error: err } = await authClient.signUp.email({ email, password, name });
+		const { error: err } = await authClient.signUp.email({ email, password, name });
 		loading = false;
 		if (err) {
 			error = err.message ?? 'Sign up failed';
 		} else {
-			token = data?.token ?? '';
+			goto(resolve('/'));
 		}
 	}
 
 	async function handleGitHub() {
-		const { data } = await authClient.signIn.social({ provider: 'github' });
-		if (data && 'token' in data) {
-			token = data.token;
-		}
-	}
-
-	async function handleSignOut() {
-		await authClient.signOut();
-		token = '';
+		await authClient.signIn.social({ provider: 'github' });
 	}
 </script>
 
@@ -78,11 +71,6 @@
 {/if}
 
 <button onclick={handleGitHub}>Continue with GitHub</button>
-<button onclick={handleSignOut}>Sign out</button>
-
-{#if token}
-	<input type="text" readonly value={token} />
-{/if}
 
 {#if error}
 	<p>{error}</p>
