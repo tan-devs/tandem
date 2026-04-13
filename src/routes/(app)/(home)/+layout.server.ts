@@ -8,9 +8,7 @@ export const load = (async ({ locals, cookies }) => {
 
 	const authState = await getAuthState(createAuth, cookies);
 
-	// remove later
 	console.log('authState', authState);
-
 	try {
 		const currentUser = await client.query(api.auth.getCurrentUser, {});
 

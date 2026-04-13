@@ -17,8 +17,10 @@ const config = {
 	kit: {
 		adapter: adapter(),
 		alias: {
+			$src: './src',
 			$components: './src/components',
 			$convex: './src/convex',
+			$routes: './src/routes',
 			$types: './src/types'
 		}
 	},
