@@ -5,8 +5,6 @@ import { PUBLIC_CONVEX_SITE_URL, PUBLIC_CONVEX_URL } from '$env/static/public';
 import { ConvexHttpClient, type ConvexClientOptions } from 'convex/browser';
 import { _getServerToken } from '@mmailaender/convex-svelte/sveltekit';
 import { getAuthOptions } from '$convex/functions/auth';
-import type { CreateAuth } from '@convex-dev/better-auth';
-import type { GenericDataModel } from 'convex/server';
 import type { BetterAuthOptions } from 'better-auth';
 
 /**
@@ -17,10 +15,7 @@ export type InitialAuthState = {
 	isAuthenticated: boolean;
 };
 
-export const getToken = async <DataModel extends GenericDataModel>(
-	createAuth: CreateAuth<DataModel>,
-	cookies: Cookies
-) => {
+export const getToken = async (cookies: Cookies) => {
 	const options = getAuthOptions as BetterAuthOptions;
 	const createCookie = createCookieGetter(options);
 	const cookie = createCookie(JWT_COOKIE_NAME);
@@ -72,43 +67,16 @@ export const getToken = async <DataModel extends GenericDataModel>(
  * });
  * ```
  *
- * For backward compatibility, you can still pass `createAuth` and `cookies`
- * explicitly. This is useful if you don't use `withServerConvexToken`:
- *
- * @example
- * ```ts
- * // +layout.server.ts (legacy)
- * import { getAuthState } from '@mmailaender/convex-better-auth-svelte/sveltekit';
- * import { createAuth } from '../convex/auth';
- *
- * export const load = async ({ cookies }) => ({
- *   authState: await getAuthState(createAuth, cookies)
- * });
- * ```
  */
 export function getAuthState(): InitialAuthState;
-export function getAuthState<DataModel extends GenericDataModel>(
-	createAuth: CreateAuth<DataModel>,
-	cookies: Cookies
-): Promise<InitialAuthState>;
-export function getAuthState<DataModel extends GenericDataModel>(
-	createAuth?: CreateAuth<DataModel>,
-	cookies?: Cookies
-): InitialAuthState | Promise<InitialAuthState> {
+export function getAuthState(): InitialAuthState {
 	// 1. Try AsyncLocalStorage (zero-cost when withServerConvexToken is active)
 	const serverToken = _getServerToken();
 	if (serverToken !== undefined) {
 		return { isAuthenticated: true };
 	}
 
-	// 2. Fall back to cookie-based approach (backward compat)
-	if (createAuth && cookies) {
-		return getToken(createAuth, cookies).then((token) => ({
-			isAuthenticated: !!token
-		}));
-	}
-
-	// 3. No token context and no cookies — unauthenticated
+	// 2. No token context — unauthenticated
 	return { isAuthenticated: false };
 }
 

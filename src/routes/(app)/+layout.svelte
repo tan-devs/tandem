@@ -1,12 +1,13 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
-	import '$src/app.css';
+	import { createSvelteAuthClient } from '$lib/svelte/index.js';
+	import { authClient } from '$lib/services/client/auth.js';
+	import { Navbar } from '$components/app/navbar';
 
-	let { children } = $props();
+	let { children, data } = $props();
+	// createSvelteAuthClient({ authClient });
+	createSvelteAuthClient({ authClient, getServerState: () => data.authState });
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
+<Navbar />
 
 {@render children()}

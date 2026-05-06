@@ -26,10 +26,8 @@ import { createSvelteKitHandler, getToken, getAuthState } from './index.js';
 
 const mockCreateCookieGetter = vi.mocked(createCookieGetter);
 
-const mockCreateAuth = (() => ({ options: {} })) as unknown as Parameters<typeof getToken>[0];
-
-const mockCookies = (map: Record<string, string>): Parameters<typeof getToken>[1] =>
-	({ get: (name: string) => map[name] }) as Parameters<typeof getToken>[1];
+const mockCookies = (map: Record<string, string>): Parameters<typeof getToken>[0] =>
+	({ get: (name: string) => map[name] }) as Parameters<typeof getToken>[0];
 
 describe('getToken', () => {
 	beforeEach(() => {
@@ -44,10 +42,7 @@ describe('getToken', () => {
 				>
 		);
 
-		const token = await getToken(
-			mockCreateAuth,
-			mockCookies({ 'better-auth.convex_jwt': 'my-token' })
-		);
+		const token = await getToken(mockCookies({ 'better-auth.convex_jwt': 'my-token' }));
 		expect(token).toBe('my-token');
 	});
 
@@ -60,10 +55,7 @@ describe('getToken', () => {
 				>
 		);
 
-		const token = await getToken(
-			mockCreateAuth,
-			mockCookies({ 'better-auth.convex_jwt': 'insecure-token' })
-		);
+		const token = await getToken(mockCookies({ 'better-auth.convex_jwt': 'insecure-token' }));
 
 		expect(token).toBe('insecure-token');
 		expect(warnSpy).toHaveBeenCalledOnce();
@@ -80,7 +72,6 @@ describe('getToken', () => {
 		);
 
 		const token = await getToken(
-			mockCreateAuth,
 			mockCookies({ '__Secure-better-auth.convex_jwt': 'secure-token' })
 		);
 
@@ -97,7 +88,7 @@ describe('getToken', () => {
 				>
 		);
 
-		const token = await getToken(mockCreateAuth, mockCookies({}));
+		const token = await getToken(mockCookies({}));
 		expect(token).toBeUndefined();
 	});
 });
@@ -125,47 +116,11 @@ describe('getAuthState', () => {
 		expect(result).toEqual({ isAuthenticated: false });
 	});
 
-	it('falls back to cookie-based getToken when no AsyncLocalStorage token', async () => {
-		mockGetServerToken.mockReturnValue(undefined);
-		mockCreateCookieGetter.mockReturnValue(
-			() =>
-				({ name: 'better-auth.convex_jwt', attributes: {} }) as ReturnType<
-					ReturnType<typeof createCookieGetter>
-				>
-		);
-
-		const result = await getAuthState(
-			mockCreateAuth,
-			mockCookies({ 'better-auth.convex_jwt': 'cookie-token' })
-		);
-
-		expect(result).toEqual({ isAuthenticated: true });
-	});
-
-	it('falls back to cookie-based and returns false when cookie is absent', async () => {
-		mockGetServerToken.mockReturnValue(undefined);
-		mockCreateCookieGetter.mockReturnValue(
-			() =>
-				({ name: 'better-auth.convex_jwt', attributes: {} }) as ReturnType<
-					ReturnType<typeof createCookieGetter>
-				>
-		);
-
-		const result = await getAuthState(mockCreateAuth, mockCookies({}));
-
-		expect(result).toEqual({ isAuthenticated: false });
-	});
-
-	it('prefers AsyncLocalStorage token over cookie-based fallback', () => {
+	it('returns isAuthenticated: true when token context exists', () => {
 		mockGetServerToken.mockReturnValue('als-token');
 
-		// Even though createAuth and cookies are provided, AsyncLocalStorage wins
-		const result = getAuthState(
-			mockCreateAuth,
-			mockCookies({ 'better-auth.convex_jwt': 'cookie-token' })
-		);
+		const result = getAuthState();
 
-		// Synchronous return — AsyncLocalStorage path doesn't need await
 		expect(result).toEqual({ isAuthenticated: true });
 	});
 });

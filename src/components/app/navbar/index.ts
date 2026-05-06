@@ -1,2 +1,2 @@
-export { default as Navbar } from './Navbar.svelte';
-export { default as ThemeToggle } from './ThemeToggle.svelte';
+export { default as Navbar } from './navigation-bar.svelte';
+export { default as ThemeToggle } from './theme-toggle.svelte';

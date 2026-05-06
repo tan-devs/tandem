@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { authClient } from '$lib/auth-client.js';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { authClient } from '$lib/services/client/auth.js';
 	import { api } from '$convex/functions/_generated/api.js';
 	import { useQuery } from '@mmailaender/convex-svelte';
-	import { useAuth } from '$lib/svelte/index.js';
+	import { useAuth } from '$lib/svelte';
+	import { resolve } from '$app/paths';
+	import Spinner from '$components/ui/spinner.svelte';
 
 	let { data } = $props();
 
@@ -10,9 +13,6 @@
 	const auth = useAuth();
 	const isLoading = $derived(auth.isLoading);
 	const isAuthenticated = $derived(auth.isAuthenticated);
-
-	$inspect(auth.isLoading, 'isLoading');
-	$inspect(auth.isAuthenticated, 'isAuthenticated');
 
 	const currentUserResponse = useQuery(
 		api.auth.getCurrentUser,
@@ -23,8 +23,6 @@
 		})
 	);
 	let user = $derived(currentUserResponse.data);
-	$inspect(currentUserResponse, 'currentUserResponse');
-	$inspect(user, 'user');
 
 	// Sign in/up form state
 	let showSignIn = $state(true);
@@ -41,6 +39,10 @@
 				await authClient.signIn.email(
 					{ email, password },
 					{
+						onSuccess: async () => {
+							await invalidateAll();
+							goto(resolve('/'));
+						},
 						onError: (ctx) => {
 							alert(ctx.error.message);
 						}
@@ -50,6 +52,7 @@
 				await authClient.signUp.email(
 					{ name, email, password },
 					{
+						onSuccess: () => goto(resolve('/')),
 						onError: (ctx) => {
 							alert(ctx.error.message);
 						}
@@ -62,7 +65,7 @@
 	}
 
 	async function handleGitHub() {
-		await authClient.signIn.social({ provider: 'github' });
+		await authClient.signIn.social({ provider: 'github', callbackURL: '/' });
 	}
 
 	// Sign out function
@@ -70,7 +73,9 @@
 		const result = await authClient.signOut();
 		if (result.error) {
 			console.error('Sign out error:', result.error);
+			return;
 		}
+		await invalidateAll();
 	}
 
 	// Toggle between sign in and sign up
@@ -103,7 +108,7 @@
 <section>
 	<main>
 		{#if isLoading}
-			<div>Loading...</div>
+			<Spinner />
 		{:else if !isAuthenticated}
 			<h2>
 				{showSignIn ? 'Sign In' : 'Sign Up'}

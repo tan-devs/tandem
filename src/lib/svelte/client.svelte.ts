@@ -129,7 +129,7 @@ type CreateSvelteAuthClientExternalArgs = CreateSvelteAuthClientBaseArgs & {
  * In a standard web app, you typically call:
  *
  * ```ts
- * import { authClient } from '$lib/auth-client';
+ * import { authClient } from '$lib/services/client/auth.js';
  *
  * createSvelteAuthClient({
  *   authClient,
